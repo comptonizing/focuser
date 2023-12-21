@@ -90,14 +90,12 @@ void Motor::setMicrostepping(uint8_t stepping) {
 	step_t oldSteps = currentSteps();
 	step_t oldStepping = microstepping();
 	step_t oldMax = maxSteps();
-	step_t oldBacklasIn = backlashIn();
-	step_t oldBacklashOut = backlashOut();
+	step_t oldBacklash = backlash();
 
 	float ratio = (float) stepping / (float) oldStepping;
 
 	setMaxSteps( (step_t)  ( ratio * oldMax ));
-	setBacklashIn( (step_t) ( ratio * oldBacklasIn ));
-	setBacklashOut( (step_t) ( ratio * oldBacklashOut ));
+	setBacklash( (step_t) ( ratio * oldBacklash ));
 	m_stepper->setCurrentPosition( (step_t) ( ratio * oldSteps ));
 	m_microStepping = stepping;
 	m_driver.setMicrostepsPerStep(stepping);
@@ -112,18 +110,12 @@ void Motor::setInverted(bool inverted) {
         if ( ! m_invert ) {
             m_driver.enableInverseMotorDirection();
             m_stepper->setCurrentPosition(maxSteps() - m_stepper->currentPosition());
-            step_t tmp = m_backlashIn;
-            m_backlashIn = m_backlashOut;
-            m_backlashOut = tmp;
             m_invert = true;
         }
     } else {
         if ( m_invert ) {
             m_driver.disableInverseMotorDirection();
             m_stepper->setCurrentPosition(maxSteps() - m_stepper->currentPosition());
-            step_t tmp = m_backlashIn;
-            m_backlashIn = m_backlashOut;
-            m_backlashOut = tmp;
             m_invert = false;
         }
     }
@@ -173,9 +165,7 @@ void Motor::state(char *buff, size_t buffSize) {
 
     json[F("S")] = (step_t) currentSteps();
     update();
-	json[F("BI")] = (step_t) backlashIn();
-	update();
-	json[F("BO")] = (step_t) backlashOut();
+	json[F("BI")] = (step_t) backlash();
 	update();
 	json[F("MS")] = (step_t) maxSteps();
 	update();
@@ -231,20 +221,12 @@ bool Motor::coolStep() {
     return m_coolStep;
 }
 
-void Motor::setBacklashIn(step_t steps) {
-	m_backlashIn = steps;
+void Motor::setBacklash(step_t steps) {
+	m_backlash = steps;
 }
 
-step_t Motor::backlashIn() {
-	return m_backlashIn;
-}
-
-void Motor::setBacklashOut(step_t steps) {
-	m_backlashOut = steps;
-}
-
-step_t Motor::backlashOut() {
-	return m_backlashOut;
+step_t Motor::backlash() {
+	return m_backlash;
 }
 
 void Motor::setMaxSteps(step_t steps) {

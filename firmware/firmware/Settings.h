@@ -75,8 +75,7 @@ class Settings {
     bool runSync(const char *cmd);
     bool runStop(const char *cmd);
     bool runSetMaxSteps(const char *cmd);
-    bool runSetBacklashIn(const char *cmd);
-    bool runSetBacklashOut(const char *cmd);
+    bool runSetBacklash(const char *cmd);
     void runUnknownCommand();
     void saveAndAck();
     void sendMessage(char *msg);
@@ -86,8 +85,7 @@ class Settings {
     void sendStatus();
 
 	step_t m_maxSteps = 10000;
-	step_t m_backlashIn = 0;
-	step_t m_backlasOut = 0;
+	step_t m_backlash = 0;
     uint8_t m_runCurrent = 50;
     uint8_t m_holdCurrent = 10;
     uint8_t m_microStepping = 16;

@@ -64,12 +64,10 @@ class Motor {
         void setCoolStep(bool enabled);
         void stop();
         void setTargetSteps(step_t steps);
-		    void setMaxSteps(step_t steps);
-		    step_t maxSteps();
-		    void setBacklashIn(step_t steps);
-		    step_t backlashIn();
-		    void setBacklashOut(step_t steps);
-		    step_t backlashOut();
+		void setMaxSteps(step_t steps);
+		step_t maxSteps();
+		void setBacklash(step_t steps);
+		step_t backlash();
 
     private:
         Motor();
@@ -87,9 +85,8 @@ class Motor {
         TMC2209::StandstillMode m_standStillMode = TMC2209::StandstillMode::NORMAL;
 
         uint8_t m_microStepping = 16;
-		    step_t m_maxSteps = 10000;
-		    step_t m_backlashIn = 0;
-		    step_t m_backlashOut = 0;
+		step_t m_maxSteps = 10000;
+		step_t m_backlash = 0;
 
         SoftwareSerial *m_serial = nullptr;
         AccelStepper *m_stepper = nullptr;

@@ -108,8 +108,7 @@ void Settings::applySettings() {
 	// Microstepping first, otherwise the max and backlash will be wrong
     Motor::i().setMicrostepping(m_microStepping);
 	Motor::i().setMaxSteps(m_maxSteps);
-	Motor::i().setBacklashIn(m_backlashIn);
-	Motor::i().setBacklashOut(m_backlasOut);
+	Motor::i().setBacklash(m_backlash);
     Motor::i().setInverted(m_invert);
     Motor::i().setSpeed(m_speed);
     Motor::i().setStandStillMode(m_standStillMode);
@@ -411,28 +410,14 @@ bool Settings::runSetMaxSteps(const char *cmd) {
 	return true;
 }
 
-bool Settings::runSetBacklashIn(const char *cmd) {
+bool Settings::runSetBacklash(const char *cmd) {
 	step_t steps;
 	if ( sscanf(cmd, PSTR("blin %lu"), &steps) != 1 ) {
 		return false;
 	}
 	Motor::i().update();
-	m_backlashIn = steps;
-	Motor::i().setBacklashIn(steps);
-	Motor::i().update();
-	saveAndAck();
-	Motor::i().update();
-	return true;
-}
-
-bool Settings::runSetBacklashOut(const char *cmd) {
-	step_t steps;
-	if ( sscanf(cmd, PSTR("blout %lu"), &steps) != 1 ) {
-		return false;
-	}
-	Motor::i().update();
-	m_backlasOut = steps;
-	Motor::i().setBacklashOut(steps);
+	m_backlash = steps;
+	Motor::i().setBacklash(steps);
 	Motor::i().update();
 	saveAndAck();
 	Motor::i().update();
@@ -477,13 +462,9 @@ bool Settings::runCommand(const char *cmd) {
 	  return true;
   }
   Motor::i().update();
-  if ( runSetBacklashIn(cmd) ) {
+  if ( runSetBacklash(cmd) ) {
 	  return true;
   } 
-  Motor::i().update();
-  if ( runSetBacklashOut(cmd) ) {
-	  return true;
-  }
   Motor::i().update();
   if ( runSetAccel(cmd) ) {
       return true;
