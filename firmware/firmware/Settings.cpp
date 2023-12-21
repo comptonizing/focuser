@@ -109,6 +109,7 @@ void Settings::applySettings() {
     Motor::i().setMicrostepping(m_microStepping);
 	Motor::i().setMaxSteps(m_maxSteps);
 	Motor::i().setBacklash(m_backlash);
+	Motor::i().setBacklashEnabled(m_backlashEnabled);
     Motor::i().setInverted(m_invert);
     Motor::i().setSpeed(m_speed);
     Motor::i().setStandStillMode(m_standStillMode);
@@ -424,6 +425,30 @@ bool Settings::runSetBacklash(const char *cmd) {
 	return true;
 }
 
+bool Settings::runSetBacklashEnabled(const char *cmd) {
+    bool enabled;
+    bool found;
+    if ( strcmp_P(cmd, F("set backlash on")) == 0 ) {
+        enabled = true;
+        found = true;
+    }
+    Motor::i().update();
+    if ( strcmp_P(cmd, F("set backlash off")) == 0 ) {
+        enabled = false;
+        found = true;
+    }
+    Motor::i().update();
+    if ( ! found ) {
+        return false;
+    }
+	m_backlashEnabled = enabled;
+	Motor::i().setBacklashEnabled(m_backlashEnabled);
+    Motor::i().update();
+    saveAndAck();
+    Motor::i().update();
+    return true;
+}
+
 void Settings::runUnknownCommand() {
   sendErrorMessage(F("Unknown command"));
   Motor::i().update();
@@ -465,6 +490,10 @@ bool Settings::runCommand(const char *cmd) {
   if ( runSetBacklash(cmd) ) {
 	  return true;
   } 
+  Motor::i().update();
+  if ( runSetBacklashEnabled(cmd) ) {
+	  return true;
+  }
   Motor::i().update();
   if ( runSetAccel(cmd) ) {
       return true;

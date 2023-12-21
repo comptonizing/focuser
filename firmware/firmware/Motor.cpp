@@ -165,7 +165,9 @@ void Motor::state(char *buff, size_t buffSize) {
 
     json[F("S")] = (step_t) currentSteps();
     update();
-	json[F("BI")] = (step_t) backlash();
+	json[F("B")] = (step_t) backlash();
+	update();
+	json[F("BE")] = backlashEnabled();
 	update();
 	json[F("MS")] = (step_t) maxSteps();
 	update();
@@ -188,6 +190,8 @@ void Motor::state(char *buff, size_t buffSize) {
     json[F("CP")] = stealthChop();
     update();
     json[F("CS")] = coolStep();
+	update();
+	json[F("id")] = 3;
 
     update();
 
@@ -227,6 +231,14 @@ void Motor::setBacklash(step_t steps) {
 
 step_t Motor::backlash() {
 	return m_backlash;
+}
+
+void Motor::setBacklashEnabled(bool enabled) {
+	m_backlashEnabled = enabled;
+}
+
+bool Motor::backlashEnabled() {
+	return m_backlashEnabled;
 }
 
 void Motor::setMaxSteps(step_t steps) {

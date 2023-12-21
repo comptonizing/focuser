@@ -68,6 +68,8 @@ class Motor {
 		step_t maxSteps();
 		void setBacklash(step_t steps);
 		step_t backlash();
+		bool backlashEnabled();
+		void setBacklashEnabled(bool enabled);
 
     private:
         Motor();
@@ -87,6 +89,7 @@ class Motor {
         uint8_t m_microStepping = 16;
 		step_t m_maxSteps = 10000;
 		step_t m_backlash = 0;
+		bool m_backlashEnabled = false;
 
         SoftwareSerial *m_serial = nullptr;
         AccelStepper *m_stepper = nullptr;
