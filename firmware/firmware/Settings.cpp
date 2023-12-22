@@ -350,7 +350,7 @@ bool Settings::runSetStealthChop(const char *cmd) {
 
 bool Settings::runSetCoolStep(const char *cmd) {
     bool enabled;
-    bool found;
+    bool found = false;
     if ( strcmp_P(cmd, F("set coolstep on")) == 0 ) {
         enabled = true;
         found = true;
@@ -413,7 +413,7 @@ bool Settings::runSetMaxSteps(const char *cmd) {
 
 bool Settings::runSetBacklash(const char *cmd) {
 	step_t steps;
-	if ( sscanf(cmd, PSTR("blin %lu"), &steps) != 1 ) {
+	if ( sscanf(cmd, PSTR("set bl %lu"), &steps) != 1 ) {
 		return false;
 	}
 	Motor::i().update();
@@ -427,7 +427,7 @@ bool Settings::runSetBacklash(const char *cmd) {
 
 bool Settings::runSetBacklashEnabled(const char *cmd) {
     bool enabled;
-    bool found;
+    bool found = false;
     if ( strcmp_P(cmd, F("set backlash on")) == 0 ) {
         enabled = true;
         found = true;
@@ -475,6 +475,10 @@ bool Settings::runCommand(const char *cmd) {
       return true;
   }
   Motor::i().update();
+  if ( runSync(cmd) ) {
+      return true;
+  }
+  Motor::i().update();
   if ( runSetMicroStepping(cmd) ) {
       return true;
   }
@@ -512,10 +516,6 @@ bool Settings::runCommand(const char *cmd) {
   }
   Motor::i().update();
   if ( runSetInverted(cmd) ) {
-      return true;
-  }
-  Motor::i().update();
-  if ( runSync(cmd) ) {
       return true;
   }
   Motor::i().update();

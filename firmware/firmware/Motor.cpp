@@ -192,6 +192,8 @@ void Motor::state(char *buff, size_t buffSize) {
     json[F("CS")] = coolStep();
 	update();
 	json[F("id")] = 3;
+	update();
+	json[F("T")] = m_stepper->targetPosition();
 
     update();
 
