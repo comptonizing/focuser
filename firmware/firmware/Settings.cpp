@@ -23,6 +23,7 @@
 
 
 #include "Settings.h"
+#include "Storage.h"
 
 #define OFFSET_MAGIC 0
 static uint16_t __magic = 0b1110110101010010;
@@ -36,58 +37,20 @@ Settings &Settings::i() {
   return theInstance;
 }
 
-void Settings::readEEPROM(uint16_t address, uint8_t *buff, uint16_t n) {
-  for (int ii=0; ii<n; ii++) {
-    buff[ii] = EEPROM.read(address+ii);
-  }
-}
-
-void Settings::writeEEPROM(uint16_t address, uint8_t *buff, uint16_t n) {
-  for (int ii=0; ii<n; ii++) {
-    EEPROM.write(address+ii, buff[ii]);
-  }
-}
-
-uint16_t Settings::crcCalc(uint8_t *data, uint16_t n) {
-  uint16_t crc = 0;
-  for (uint16_t ii=0; ii<n; ii++) {
-    crc = _crc16_update(crc, data[ii]);
-  }
-  return crc;
-}
-
-uint16_t Settings::crcCalc(const char *str) {
-  uint16_t crc = 0;
-  while ( *str != '\0' ) {
-    crc = _crc16_update(crc, *str);
-    str++;
-  }
-  return crc;
-}
-
-uint16_t Settings::crcCalc(const __FlashStringHelper *data, uint16_t n) {
-  const char *ptr = reinterpret_cast<const char *>(data);
-  uint16_t crc = 0;
-  for (uint16_t ii=0; ii<n; ii++) {
-    crc = _crc16_update(crc, pgm_read_byte(ptr+ii));
-  }
-  return crc;
-}
-
 bool Settings::loadFromEEPROM() {
   uint16_t magic;
   uint16_t crc;
   uint8_t data[sizeof(Settings)];
 
-  readEEPROM(OFFSET_MAGIC, (uint8_t *) &magic, sizeof(magic));
+  Storage::readEEPROM(OFFSET_MAGIC, (uint8_t *) &magic, sizeof(magic));
   if ( magic != __magic ) {
     return false;
   }
 
-  readEEPROM(OFFSET_CRC, (uint8_t *) &crc, sizeof(crc));
-  readEEPROM(OFFSET_DATA, data, sizeof(Settings));
+  Storage::readEEPROM(OFFSET_CRC, (uint8_t *) &crc, sizeof(crc));
+  Storage::readEEPROM(OFFSET_DATA, data, sizeof(Settings));
 
-  if ( crc != crcCalc(data, sizeof(Settings)) ) {
+  if ( crc != Storage::crcCalc(data, sizeof(Settings)) ) {
     return false;
   }
 
@@ -96,10 +59,10 @@ bool Settings::loadFromEEPROM() {
 }
 
 void Settings::saveToEEPROM() {
-  uint16_t crc = crcCalc((uint8_t *) this, sizeof(Settings));
-  writeEEPROM(OFFSET_DATA, (uint8_t *) this, sizeof(Settings));
-  writeEEPROM(OFFSET_CRC, (uint8_t *) &crc, sizeof(crc));
-  writeEEPROM(OFFSET_MAGIC, (uint8_t *) &__magic, sizeof(__magic));
+  uint16_t crc = Storage::crcCalc((uint8_t *) this, sizeof(Settings));
+  Storage::writeEEPROM(OFFSET_DATA, (uint8_t *) this, sizeof(Settings));
+  Storage::writeEEPROM(OFFSET_CRC, (uint8_t *) &crc, sizeof(crc));
+  Storage::writeEEPROM(OFFSET_MAGIC, (uint8_t *) &__magic, sizeof(__magic));
 }
 
 void Settings::applySettings() {
@@ -128,7 +91,7 @@ Settings::~Settings() {
 }
 
 void Settings::sendMessage(char *msg) {
-  uint16_t crc = crcCalc(msg);
+  uint16_t crc = Storage::crcCalc(msg);
   Motor::i().update();
   char crcMsg[3];
   crcMsg[0] = ((char *) &crc)[0];
@@ -149,7 +112,7 @@ void Settings::sendMessage(char *msg) {
 }
 
 void Settings::sendMessage(const __FlashStringHelper *msg) {
-  uint16_t crc = crcCalc(msg, strlen_P(msg));
+  uint16_t crc = Storage::crcCalc(msg, strlen_P(msg));
   Motor::i().update();
   char crcMsg[3];
   crcMsg[0] = ((char *) &crc)[0];

@@ -40,6 +40,7 @@
 
 #include "CommandBuffer.h"
 #include "Motor.h"
+#include "Storage.h"
 
 class Settings {
   public:
@@ -52,14 +53,9 @@ class Settings {
     ~Settings();
     Settings(const Settings&);
     Settings& operator=(const Settings&);
-    void readEEPROM(uint16_t address, uint8_t *buff, uint16_t n);
-    void writeEEPROM(uint16_t address, uint8_t *buff, uint16_t n);
     bool loadFromEEPROM();
     void saveToEEPROM();
     void applySettings();
-    uint16_t crcCalc(uint8_t *data, uint16_t n);
-    uint16_t crcCalc(const __FlashStringHelper *data, uint16_t n);
-    uint16_t crcCalc(const char *str);
 
     bool runStatus(const char *cmd);
     bool runSetTarget(const char *cmd);
