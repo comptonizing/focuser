@@ -78,6 +78,8 @@ void Settings::applySettings() {
     Motor::i().setStandStillMode(m_standStillMode);
     Motor::i().setStealthChop(m_stealthChop);
     Motor::i().setCoolStep(m_coolStep);
+	Motor::i().setMotionStorage(OFFSET_DATA + sizeof(Settings));
+	Motor::i().loadMotionStatus();
 }
 
 Settings::Settings() {

@@ -23,13 +23,13 @@
 
 
 #include "Motor.h"
+#include "Storage.h"
 
 Motor::Motor() {
     m_serial = new SoftwareSerial(PIN_RX, PIN_TX);
     m_driver.setup(*m_serial);
     m_stepper = new AccelStepper(1, PIN_STEP, PIN_DIR);
 
-    //  m_driver.enableCoolStep();
     m_driver.setRunCurrent(m_runCurrent);
     m_driver.setHoldCurrent(m_holdCurrent);
     m_driver.setMicrostepsPerStep(m_microStepping);
@@ -53,6 +53,7 @@ Motor::Motor() {
 }
 
 void Motor::update() {
+	saveMotionStatus();
     m_stepper->run();
 }
 
@@ -99,6 +100,7 @@ void Motor::setMicrostepping(uint8_t stepping) {
 	m_stepper->setCurrentPosition( (step_t) ( ratio * oldSteps ));
 	m_microStepping = stepping;
 	m_driver.setMicrostepsPerStep(stepping);
+	saveMotionStatus(true);
 }
 
 uint8_t Motor::microstepping() {
@@ -110,15 +112,18 @@ void Motor::setInverted(bool inverted) {
         if ( ! m_invert ) {
             m_driver.enableInverseMotorDirection();
             m_stepper->setCurrentPosition(maxSteps() - m_stepper->currentPosition());
+			m_lastDirection = oppositeDirection(m_lastDirection);
             m_invert = true;
         }
     } else {
         if ( m_invert ) {
             m_driver.disableInverseMotorDirection();
             m_stepper->setCurrentPosition(maxSteps() - m_stepper->currentPosition());
+			m_lastDirection = oppositeDirection(m_lastDirection);
             m_invert = false;
         }
     }
+	saveMotionStatus(true);
 }
 
 bool Motor::isInverted() {
@@ -204,6 +209,7 @@ void Motor::state(char *buff, size_t buffSize) {
 
 void Motor::syncSteps(step_t steps) {
     m_stepper->setCurrentPosition(steps);
+	saveMotionStatus(true);
 }
 
 void Motor::stop() {
@@ -258,4 +264,83 @@ void Motor::setCoolStep(bool enabled) {
     } else {
         m_driver.disableCoolStep();
     }
+}
+
+void Motor::setMotionStorage(uint16_t location) {
+	m_motionStorage = location;
+}
+
+bool Motor::loadMotionStatus() {
+	if ( m_motionStorage == 0 ) {
+		return false;
+	}
+	uint16_t magic;
+	uint16_t crc;
+	motion_t motion;
+	uint8_t data[sizeof(motion_t)];
+
+	uint16_t addressMagic = m_motionStorage;
+	Storage::readEEPROM(addressMagic, (uint8_t *) &magic, sizeof(magic));
+	if ( magic != __motion_magic ) {
+		return false;
+	}
+	uint16_t addressCRC = addressMagic + sizeof(magic);
+	uint16_t addressData = addressCRC + sizeof(crc);
+
+	Storage::readEEPROM(addressCRC, (uint8_t *) &crc, sizeof(crc));
+	Storage::readEEPROM(addressData, (uint8_t *) &motion, sizeof(motion));
+
+	if ( crc != Storage::crcCalc((uint8_t *) &motion, sizeof(motion)) ) {
+		return false;
+	}
+
+	if ( motion.direction != MOTION_UNKNOWN &&
+		 motion.direction != MOTION_INWARD &&
+		 motion.direction != MOTION_OUTWARD ) {
+		return false;
+	}
+	if ( motion.position > m_maxSteps ) {
+		return false;
+	}
+	m_stepper->setCurrentPosition(motion.position);
+	m_lastSavedMotion.position = motion.position;
+	m_lastDirection = motion.direction;
+	m_lastSavedMotion.direction = motion.direction;
+
+	return true;
+}
+
+void Motor::saveMotionStatus(bool force) {
+	if ( (unsigned long)(millis() - m_lastStored) < m_storeInterval && ! force ) {
+		return;
+	}
+	motion_t motion = { .position = currentSteps(), .direction = m_lastDirection };
+	if ( motion.position == m_lastSavedMotion.position &&
+			motion.direction == m_lastSavedMotion.direction && ! force ) {
+		return;
+	}
+
+	uint16_t crc = Storage::crcCalc((uint8_t *) &motion, sizeof(motion));
+	uint16_t addressMagic = m_motionStorage;
+	uint16_t addressCRC = addressMagic + sizeof(__motion_magic);
+	uint16_t addressData = addressCRC + sizeof(crc);
+	Storage::writeEEPROM(addressMagic, (uint8_t *) &__motion_magic, sizeof(__motion_magic));
+	Storage::writeEEPROM(addressCRC, (uint8_t *) &crc, sizeof(crc));
+	Storage::writeEEPROM(addressData, (uint8_t *) &motion, sizeof(motion));
+
+	m_lastSavedMotion = motion;
+	m_lastStored = millis();
+}
+
+Motor::direction_t Motor::oppositeDirection(direction_t direction) {
+	switch (direction) {
+		case MOTION_INWARD:
+			return MOTION_OUTWARD;
+		case MOTION_OUTWARD:
+			return MOTION_INWARD;
+		case MOTION_UNKNOWN:
+			return MOTION_UNKNOWN;
+		default:
+			return MOTION_UNKNOWN;
+	}
 }

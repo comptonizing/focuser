@@ -20,8 +20,6 @@
  *
  */
 
-
-
 #pragma once
 
 #include <math.h>
@@ -29,10 +27,14 @@
 #include <TMC2209.h>
 #include <ArduinoJson.h>
 
+#include "Storage.h"
+
 #define PIN_DIR 6
 #define PIN_STEP 7
 #define PIN_TX 8
 #define PIN_RX 9
+
+static uint16_t __motion_magic = 0b0110100011001011; // by Eva
 
 typedef uint32_t step_t;
 
@@ -70,12 +72,28 @@ class Motor {
 		step_t backlash();
 		bool backlashEnabled();
 		void setBacklashEnabled(bool enabled);
+		void setMotionStorage(uint16_t location);
+		bool loadMotionStatus();
+
+		typedef enum {
+			MOTION_INWARD = 0,
+			MOTION_OUTWARD = 1,
+			MOTION_UNKNOWN = 2
+		} direction_t;
+
+		typedef struct {
+			step_t position;
+			direction_t direction;
+		} motion_t;
 
     private:
         Motor();
         ~Motor();
         Motor(const Motor &);
         Motor& operator=(const Motor&);
+
+		void saveMotionStatus(bool force = false);
+		Motor::direction_t oppositeDirection(direction_t direction);
 
         uint8_t m_runCurrent = 50;
         uint8_t m_holdCurrent = 10;
@@ -95,4 +113,9 @@ class Motor {
         AccelStepper *m_stepper = nullptr;
         TMC2209 m_driver;
 
+		uint16_t m_motionStorage = 0;
+		uint32_t m_lastStored = 0;
+		uint16_t m_storeInterval = 3000;
+		direction_t m_lastDirection = MOTION_UNKNOWN;
+		motion_t m_lastSavedMotion = { .position = 0, .direction = MOTION_UNKNOWN };
 };
