@@ -351,6 +351,9 @@ void Motor::saveMotionStatus(bool force) {
 	if ( m_stepper->isRunning() && ! force ) {
 		return;
 	}
+	if ( m_motionStorage == 0 ) {
+		return;
+	}
 	if ( (unsigned long)(millis() - m_lastStored) < m_storeInterval && ! force ) {
 		return;
 	}
