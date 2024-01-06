@@ -280,7 +280,7 @@ bool FocuserPollux::SetFocuserBacklash(int32_t ticks) {
 		LOG_ERROR("Negative backlash is not supported!");
 		return false;
 	}
-	snprintf(cmd, CMDBUFF, "set bl %d", ticks);
+	snprintf(cmd, CMDBUFF, "set bl %u", (uint32_t) ticks);
 	if ( ! sendCommand(cmd, rsp) || ! updateFromResponse(rsp) ) {
 		return true;
 	}
@@ -371,7 +371,7 @@ bool FocuserPollux::checkCrc(const char *rsp) {
 }
 
 bool FocuserPollux::sendCommand(const char *cmd, char *rsp) {
-  LOGF_INFO("Sending command: %s", cmd);
+  LOGF_DEBUG("Sending command: \"%s\"", cmd);
   int nbytes_written = 0, nbytes_read = 0, rc = -1;
   int PortFD = serialConnection->getPortFD();
   LOGF_DEBUG("PortFD: %d", PortFD);
@@ -409,7 +409,7 @@ bool FocuserPollux::sendCommand(const char *cmd, char *rsp) {
   if ( ! checkCrc(rsp) ) {
     return false;
   }
-  LOGF_INFO("RSP: %s", rsp);
+  LOGF_DEBUG("RSP: %s", rsp);
   return true;
 }
 
