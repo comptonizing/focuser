@@ -34,9 +34,9 @@
 #define PIN_TX 8
 #define PIN_RX 9
 
-static uint16_t __motion_magic = 0b0110100011001011; // by Eva
+static uint16_t __motion_magic = 0b0110100011001011; // by Eva <3
 
-typedef uint32_t step_t;
+typedef int32_t step_t;
 
 class Motor {
     public:
@@ -95,6 +95,7 @@ class Motor {
 
 		void saveMotionStatus(bool force = false);
 		Motor::direction_t oppositeDirection(direction_t direction);
+		step_t backlashCorrectedPosition();
 
 		bool m_stopped = false;
 		step_t m_currentTarget = 0;
@@ -120,7 +121,7 @@ class Motor {
 		uint16_t m_motionStorage = 0;
 		uint32_t m_lastStored = 0;
 		uint16_t m_storeInterval = 3000;
-		step_t m_lastReversed = 0;
-		direction_t m_lastDirection = MOTION_UNKNOWN;
+
+		motion_t m_lastMotion = { .position = 0, .reversed = 0, .direction = MOTION_UNKNOWN };
 		motion_t m_lastSavedMotion = { .position = 0, .reversed = 0, .direction = MOTION_UNKNOWN };
 };

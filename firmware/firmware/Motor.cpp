@@ -53,8 +53,17 @@ Motor::Motor() {
 }
 
 void Motor::update() {
+    m_stepper->run(); // Does at MOST 1 step
+	step_t positionNow = m_stepper->currentPosition();
+	if ( m_lastMotion.position != positionNow ) {
+		direction_t directionNow = positionNow > m_lastMotion.position ? MOTION_OUTWARD : MOTION_INWARD;
+		if ( directionNow != m_lastMotion.direction ) {
+			m_lastMotion.reversed = positionNow;
+			m_lastMotion.direction = directionNow;
+		}
+		m_lastMotion.position = positionNow;
+	}
 	saveMotionStatus();
-    m_stepper->run();
 }
 
 step_t Motor::currentSteps() {
@@ -62,11 +71,6 @@ step_t Motor::currentSteps() {
 }
 
 void Motor::setTargetSteps(step_t steps) {
-	direction_t newDirection = steps > m_stepper->currentPosition() ? MOTION_OUTWARD : MOTION_INWARD;
-	if ( newDirection != m_lastDirection ) {
-		m_lastReversed = m_stepper->currentPosition();
-		m_lastDirection = newDirection;
-	}
 	m_stopped = false;
 	m_currentTarget = steps;
     m_stepper->moveTo(steps);
@@ -106,7 +110,8 @@ void Motor::setMicrostepping(uint8_t stepping) {
 	setBacklash( (step_t) ( ratio * oldBacklash ));
 	m_stepper->setCurrentPosition( (step_t) ( ratio * oldSteps ));
 	m_currentTarget = (step_t) (ratio * m_currentTarget);
-	m_lastReversed = (step_t) (ratio * m_lastReversed);
+	m_lastMotion.reversed = (step_t) (ratio * m_lastMotion.reversed);
+	m_lastMotion.position = (step_t) (ratio * m_lastMotion.position);
 	m_microStepping = stepping;
 	m_driver.setMicrostepsPerStep(stepping);
 	saveMotionStatus(true);
@@ -122,8 +127,8 @@ void Motor::setInverted(bool inverted) {
             m_driver.enableInverseMotorDirection();
             m_stepper->setCurrentPosition(maxSteps() - m_stepper->currentPosition());
 			m_currentTarget = maxSteps() - m_currentTarget;
-			m_lastReversed = maxSteps() - m_lastReversed;
-			m_lastDirection = oppositeDirection(m_lastDirection);
+			m_lastMotion.reversed = maxSteps() - m_lastMotion.reversed;
+			m_lastMotion.direction = oppositeDirection(m_lastMotion.direction);
             m_invert = true;
         }
     } else {
@@ -131,8 +136,8 @@ void Motor::setInverted(bool inverted) {
             m_driver.disableInverseMotorDirection();
             m_stepper->setCurrentPosition(maxSteps() - m_stepper->currentPosition());
 			m_currentTarget = maxSteps() - m_currentTarget;
-			m_lastReversed = maxSteps() - m_lastReversed;
-			m_lastDirection = oppositeDirection(m_lastDirection);
+			m_lastMotion.reversed = maxSteps() - m_lastMotion.reversed;
+			m_lastMotion.direction = oppositeDirection(m_lastMotion.direction);
             m_invert = false;
         }
     }
@@ -221,6 +226,7 @@ void Motor::state(char *buff, size_t buffSize) {
 }
 
 void Motor::syncSteps(step_t steps) {
+	// TODO Set current m_lastMotion
     m_stepper->setCurrentPosition(steps);
 	saveMotionStatus(true);
 }
@@ -313,19 +319,15 @@ bool Motor::loadMotionStatus() {
 		 motion.direction != MOTION_OUTWARD ) {
 		return false;
 	}
-	if ( motion.position > m_maxSteps ) {
+	if ( motion.position < 0 || motion.position > m_maxSteps ) {
 		return false;
 	}
-	if ( motion.reversed > m_maxSteps ) {
+	if ( motion.reversed < 0 || motion.reversed > m_maxSteps ) {
 		return false;
 	}
 	m_stepper->setCurrentPosition(motion.position);
-	m_lastSavedMotion.position = motion.position;
-	m_lastReversed = motion.reversed;
-	m_lastSavedMotion.reversed = motion.reversed;
-	m_lastDirection = motion.direction;
-	m_lastSavedMotion.direction = motion.direction;
-
+	m_lastMotion = motion;
+	m_lastSavedMotion = motion;
 	return true;
 }
 
@@ -333,27 +335,22 @@ void Motor::saveMotionStatus(bool force) {
 	if ( (unsigned long)(millis() - m_lastStored) < m_storeInterval && ! force ) {
 		return;
 	}
-	motion_t motion = {
-		.position = m_stepper->currentPosition(),
-		.reversed = m_lastReversed,
-		.direction = m_lastDirection
-	};
-	if ( motion.position == m_lastSavedMotion.position &&
-			motion.reversed == m_lastSavedMotion.reversed &&
-			motion.direction == m_lastSavedMotion.direction &&
+	if ( m_lastMotion.position == m_lastSavedMotion.position &&
+			m_lastMotion.reversed == m_lastSavedMotion.reversed &&
+			m_lastMotion.direction == m_lastSavedMotion.direction &&
 			! force ) {
 		return;
 	}
 
-	uint16_t crc = Storage::crcCalc((uint8_t *) &motion, sizeof(motion));
+	uint16_t crc = Storage::crcCalc((uint8_t *) &m_lastMotion, sizeof(m_lastMotion));
 	uint16_t addressMagic = m_motionStorage;
 	uint16_t addressCRC = addressMagic + sizeof(__motion_magic);
 	uint16_t addressData = addressCRC + sizeof(crc);
 	Storage::writeEEPROM(addressMagic, (uint8_t *) &__motion_magic, sizeof(__motion_magic));
 	Storage::writeEEPROM(addressCRC, (uint8_t *) &crc, sizeof(crc));
-	Storage::writeEEPROM(addressData, (uint8_t *) &motion, sizeof(motion));
+	Storage::writeEEPROM(addressData, (uint8_t *) &m_lastMotion, sizeof(m_lastMotion));
 
-	m_lastSavedMotion = motion;
+	m_lastSavedMotion = m_lastMotion;
 	m_lastStored = millis();
 }
 
@@ -368,4 +365,9 @@ Motor::direction_t Motor::oppositeDirection(direction_t direction) {
 		default:
 			return MOTION_UNKNOWN;
 	}
+}
+
+step_t Motor::backlashCorrectedPosition() {
+	step_t motorSteps = m_stepper->currentPosition();
+	step_t steps;
 }
