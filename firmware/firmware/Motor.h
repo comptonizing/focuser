@@ -75,7 +75,7 @@ class Motor {
 		void setMotionStorage(uint16_t location);
 		bool loadMotionStatus();
 
-		typedef enum {
+		typedef enum : uint8_t {
 			MOTION_INWARD = 0,
 			MOTION_OUTWARD = 1,
 			MOTION_UNKNOWN = 2
@@ -83,6 +83,7 @@ class Motor {
 
 		typedef struct {
 			step_t position;
+			step_t reversed;
 			direction_t direction;
 		} motion_t;
 
@@ -94,6 +95,9 @@ class Motor {
 
 		void saveMotionStatus(bool force = false);
 		Motor::direction_t oppositeDirection(direction_t direction);
+
+		bool m_stopped = false;
+		step_t m_currentTarget = 0;
 
         uint8_t m_runCurrent = 50;
         uint8_t m_holdCurrent = 10;
@@ -116,6 +120,7 @@ class Motor {
 		uint16_t m_motionStorage = 0;
 		uint32_t m_lastStored = 0;
 		uint16_t m_storeInterval = 3000;
+		step_t m_lastReversed = 0;
 		direction_t m_lastDirection = MOTION_UNKNOWN;
-		motion_t m_lastSavedMotion = { .position = 0, .direction = MOTION_UNKNOWN };
+		motion_t m_lastSavedMotion = { .position = 0, .reversed = 0, .direction = MOTION_UNKNOWN };
 };
