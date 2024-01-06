@@ -95,7 +95,6 @@ class Motor {
 
 		void saveMotionStatus(bool force = false);
 		Motor::direction_t oppositeDirection(direction_t direction);
-		step_t backlashCorrectedPosition();
 
 		bool m_stopped = false;
 		step_t m_currentTarget = 0;
@@ -124,4 +123,5 @@ class Motor {
 
 		motion_t m_lastMotion = { .position = 0, .reversed = 0, .direction = MOTION_UNKNOWN };
 		motion_t m_lastSavedMotion = { .position = 0, .reversed = 0, .direction = MOTION_UNKNOWN };
+		step_t m_backlashLeft = 0;
 };

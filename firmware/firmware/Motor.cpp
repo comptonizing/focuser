@@ -53,6 +53,7 @@ Motor::Motor() {
 }
 
 void Motor::update() {
+	step_t positionOld = m_stepper->currentPosition();
     m_stepper->run(); // Does at MOST 1 step
 	step_t positionNow = m_stepper->currentPosition();
 	if ( m_lastMotion.position != positionNow ) {
@@ -60,14 +61,26 @@ void Motor::update() {
 		if ( directionNow != m_lastMotion.direction ) {
 			m_lastMotion.reversed = positionNow;
 			m_lastMotion.direction = directionNow;
+			m_backlashLeft = backlash() - m_backlashLeft;
 		}
 		m_lastMotion.position = positionNow;
+	}
+	if ( positionOld != positionNow && backlashEnabled() && m_backlashLeft > 0 ) {
+		//float speedOld = m_stepper->speed();
+		//long targetOld = m_stepper->targetPosition();
+		// Pretend the last step didn't actually happen
+		m_stepper->setCurrentPositionForce(positionOld);
+		//m_stepper->setSpeed(speedOld);
+		//m_stepper->moveTo(targetOld);
+		m_lastMotion.position = positionOld;
+		// Decrease the left backlash steps by 1
+		m_backlashLeft--;
 	}
 	saveMotionStatus();
 }
 
 step_t Motor::currentSteps() {
-    return m_stepper->currentPosition();
+	return m_stepper->currentPosition();
 }
 
 void Motor::setTargetSteps(step_t steps) {
@@ -271,6 +284,9 @@ bool Motor::backlashEnabled() {
 
 void Motor::setMaxSteps(step_t steps) {
   m_maxSteps = steps;
+  if ( m_stepper->currentPosition() > steps ) {
+	  m_stepper->setCurrentPosition(steps);
+  }
 }
 
 step_t Motor::maxSteps() {
@@ -365,9 +381,4 @@ Motor::direction_t Motor::oppositeDirection(direction_t direction) {
 		default:
 			return MOTION_UNKNOWN;
 	}
-}
-
-step_t Motor::backlashCorrectedPosition() {
-	step_t motorSteps = m_stepper->currentPosition();
-	step_t steps;
 }

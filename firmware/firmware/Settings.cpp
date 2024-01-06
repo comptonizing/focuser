@@ -378,7 +378,7 @@ bool Settings::runSetMaxSteps(const char *cmd) {
 
 bool Settings::runSetBacklash(const char *cmd) {
 	step_t steps;
-	if ( sscanf(cmd, PSTR("set bl %lu"), &steps) != 1 ) {
+	if ( sscanf_P(cmd, PSTR("set bl %lu"), &steps) != 1 ) {
 		return false;
 	}
 	Motor::i().update();
