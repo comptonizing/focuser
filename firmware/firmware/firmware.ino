@@ -35,6 +35,7 @@
 #define MSG_POSTFIX '$'
 
 void setup() {
+    pinMode(13, OUTPUT);
     Settings::i().setup();
 }
 

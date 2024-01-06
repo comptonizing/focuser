@@ -9,9 +9,11 @@ void readEEPROM(uint16_t address, uint8_t *buff, uint16_t n) {
 }
 
 void writeEEPROM(uint16_t address, uint8_t *buff, uint16_t n) {
+  digitalWrite(13, HIGH);
   for (int ii=0; ii<n; ii++) {
     EEPROM.write(address+ii, buff[ii]);
   }
+  digitalWrite(13, LOW);
 }
 
 uint16_t crcCalc(uint8_t *data, uint16_t n) {
