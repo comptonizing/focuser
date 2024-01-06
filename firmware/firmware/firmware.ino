@@ -27,7 +27,7 @@
 #include <math.h>
 #include <util/crc16.h>
 #include <TMC2209.h>
-#include <AccelStepper.h>
+#include "AccelStepper.h"
 
 #include "Settings.h"
 
