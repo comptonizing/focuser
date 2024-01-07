@@ -74,6 +74,9 @@ class Motor {
 		void setBacklashEnabled(bool enabled);
 		void setMotionStorage(uint16_t location);
 		bool loadMotionStatus();
+		void enable();
+		void disable();
+		bool isEnabled();
 
 		typedef enum : uint8_t {
 			MOTION_INWARD = 0,
@@ -107,6 +110,7 @@ class Motor {
         uint16_t m_speed = 500;
         uint16_t m_accel = 200;
         TMC2209::StandstillMode m_standStillMode = TMC2209::StandstillMode::NORMAL;
+		bool m_enabled = false;
 
         uint8_t m_microStepping = 16;
 		step_t m_maxSteps = 10000;

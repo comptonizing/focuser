@@ -46,6 +46,7 @@ Motor::Motor() {
         m_driver.disableStealthChop();
     }
     m_driver.enable();
+	m_enabled = true;
 
     m_stepper->setCurrentPosition(0);
     m_stepper->setSpeed(m_speed);
@@ -76,6 +77,13 @@ void Motor::update() {
 		// Decrease the left backlash steps by 1
 		m_backlashLeft--;
 	}
+	if ( ! m_stepper->isRunning() ) {
+		if ( m_holdCurrent == 0 ) {
+			disable();
+		} else {
+			enable();
+		}
+	}
 	saveMotionStatus();
 }
 
@@ -87,6 +95,9 @@ void Motor::setTargetSteps(step_t steps) {
 	m_stopped = false;
 	m_currentTarget = steps;
     m_stepper->moveTo(steps);
+	if ( steps != m_stepper->currentPosition() ) {
+		enable();
+	}
 }
 
 step_t Motor::targetSteps() {
@@ -387,4 +398,24 @@ Motor::direction_t Motor::oppositeDirection(direction_t direction) {
 		default:
 			return MOTION_UNKNOWN;
 	}
+}
+
+void Motor::enable() {
+	if ( m_enabled ) {
+		return;
+	}
+	m_driver.enable();
+	m_enabled = true;
+}
+
+void Motor::disable() {
+	if ( ! m_enabled ) {
+		return;
+	}
+	m_driver.disable();
+	m_enabled = false;
+}
+
+bool Motor::isEnabled() {
+	return m_enabled;
 }

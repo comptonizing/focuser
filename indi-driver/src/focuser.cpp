@@ -71,7 +71,7 @@ bool FocuserPollux::initProperties() {
 
     IUFillNumber(&MotorN[ACCEL], "ACCEL", "Acceleration", "%.0f", 1, 4000, 1000, 1);
     IUFillNumber(&MotorN[RUNCURRENT], "RUNCURRENT", "Run Current [%]", "%.0f", 1, 100, 1, 100);
-    IUFillNumber(&MotorN[HOLDCURRENT], "HOLDCURRENT", "Hold Current [%]", "%.0f", 1, 100, 1, 100);
+    IUFillNumber(&MotorN[HOLDCURRENT], "HOLDCURRENT", "Hold Current [%]", "%.0f", 0, 100, 1, 10);
     IUFillNumberVector(&MotorNP, MotorN, 3, getDeviceName(), "MOTOR", "Motor Settings",
             MAIN_CONTROL_TAB, IP_RW, TIMEOUT, IPS_IDLE);
 
