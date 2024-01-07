@@ -55,7 +55,7 @@ Motor::Motor() {
 
 void Motor::update() {
 	step_t positionOld = m_stepper->currentPosition();
-    m_stepper->run(); // Does at MOST 1 step
+  m_stepper->run(); // Does at MOST 1 step
 	step_t positionNow = m_stepper->currentPosition();
 	if ( m_lastMotion.position != positionNow ) {
 		direction_t directionNow = positionNow > m_lastMotion.position ? MOTION_OUTWARD : MOTION_INWARD;
@@ -66,13 +66,13 @@ void Motor::update() {
 		}
 		m_lastMotion.position = positionNow;
 	}
-	if ( positionOld != positionNow && backlashEnabled() && m_backlashLeft > 0 ) {
-		//float speedOld = m_stepper->speed();
-		//long targetOld = m_stepper->targetPosition();
+
+  // TODO no backlash correction for distances of 1 step relative to target.
+  // That's because for some reason when reversing and only doing one step
+  // no step is taken at all, stalling everything
+	if ( positionOld != positionNow && abs(m_currentTarget - positionNow) > 0 && backlashEnabled() && m_backlashLeft > 0 ) {
 		// Pretend the last step didn't actually happen
 		m_stepper->setCurrentPositionForce(positionOld);
-		//m_stepper->setSpeed(speedOld);
-		//m_stepper->moveTo(targetOld);
 		m_lastMotion.position = positionOld;
 		// Decrease the left backlash steps by 1
 		m_backlashLeft--;
