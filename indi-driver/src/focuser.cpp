@@ -22,7 +22,6 @@
 
 
 #include "focuser.h"
-#include <indifocuser.h>
 
 static std::unique_ptr<FocuserPollux> rotatorPolluxDriver((new FocuserPollux()));
 
@@ -67,7 +66,6 @@ bool FocuserPollux::initProperties() {
     serialConnection->registerHandshake([&]() {
         return Handshake();
         });
-    registerConnection(serialConnection);
 
     IUFillNumber(&MotorN[ACCEL], "ACCEL", "Acceleration", "%.0f", 1, 4000, 1000, 1);
     IUFillNumber(&MotorN[RUNCURRENT], "RUNCURRENT", "Run Current [%]", "%.0f", 1, 100, 1, 100);
